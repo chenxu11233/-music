@@ -25,11 +25,11 @@
         <p class="little"><i></i>生命中有太多遗憾，岁月里有太多伤感</p>
         <div id="bMusic">
           <div id="pic">
-            <img src="./images/zhou.jpg">
+            <img :src="songdetail.pic">
           </div>
           <div id="songinfo">
-            <p id="sName">七里香</p>
-            <p id="sSinger">周杰伦</p>
+            <p id="sName">{{songdetail.name}}</p>
+            <p id="sSinger">{{songdetail.singer}}</p>
             <audio  v-bind:src="this.$store.state.songlist[inx]" ></audio>
           </div>
         </div>
@@ -37,7 +37,11 @@
       <div id="right">
         <router-view></router-view>
         <div id="menu" >
-          
+          <div id="menuTop"><span>播放列表</span></div>
+          <div id="menuMid">总共{{this.$store.state.songlist.length}}首</div>
+          <div v-for="(sng,index) in this.$store.state.songmenu">
+            <p :class="[(index%2) ? 'bianse' : '']"><span class="sname" :class="[(inx === index) ? 'bor' : '']" @click="getCmusic(index)">{{sng.Name}}</span><span :class="[(inx === index) ? 'bor' : '']">{{sng.Singer}}</span><span :class="[(inx === index) ? 'bor' : '']">{{sng.Time}}</span></p>
+          </div>
         </div>
       </div>
     </div>
@@ -70,16 +74,23 @@ export default {
         'sec': 0,
         't': 0
       },
-      inx: 1
+      inx: 1,
+      songdetail: {
+        'singer': '',
+        'pic': '',
+        'name': ''
+      }
     }
+  },
+  mounted: function () {
+    this.getDetail()
   },
   methods: {
     getMusic () {
       var audio = document.getElementsByTagName('audio')[0]
-      console.log(audio.src)
-      console.log(this.inx)
       var _this = this
       this.tTime.t = Math.floor(audio.duration)
+      console.log(this.tTime.t)
       this.tTime.sec = Math.floor(this.tTime.t % 60)
       this.tTime.min = Math.floor(this.tTime.t / 60)
       var getMtime = function () {
@@ -90,6 +101,8 @@ export default {
         var jdt = document.getElementById('jdt')
         jdt.style.width = Math.floor(percent * 400) + 'px'
       }
+      /* 获取音乐专辑图片，歌名，歌手 */
+
       /* 显示时间和进度条 */
       var pic = document.getElementById('cPlay')
       if (audio.paused) {
@@ -109,11 +122,12 @@ export default {
       } else {
         this.inx += 1
       }
+      this.getDetail()
       setTimeout(nextmusic, 1000)
       function nextmusic () {
         var audio = document.getElementsByTagName('audio')[0]
-        console.log(_this.$store.state.songlist)
         _this.tTime.t = Math.floor(audio.duration)
+        console.log(_this.tTime.t)
         _this.tTime.sec = Math.floor(_this.tTime.t % 60)
         _this.tTime.min = Math.floor(_this.tTime.t / 60)
         var getMtime = function () {
@@ -138,6 +152,32 @@ export default {
       } else {
         this.inx -= 1
       }
+      this.getDetail()
+      setTimeout(nextmusic, 1000)
+      function nextmusic () {
+        var audio = document.getElementsByTagName('audio')[0]
+        console.log(_this.inx)
+        _this.tTime.t = Math.floor(audio.duration)
+        _this.tTime.sec = Math.floor(_this.tTime.t % 60)
+        _this.tTime.min = Math.floor(_this.tTime.t / 60)
+        var getMtime = function () {
+          _this.mTime.t = Math.round(audio.currentTime)
+          _this.mTime.sec = Math.floor(_this.mTime.t % 60)
+          _this.mTime.min = Math.floor(_this.mTime.t / 60)
+          var percent = _this.mTime.t / _this.tTime.t
+          var jdt = document.getElementById('jdt')
+          jdt.style.width = Math.floor(percent * 400) + 'px'
+        }
+        var pic = document.getElementById('cPlay')
+        audio.play()
+        pic.src = _this.stop
+        setInterval(getMtime, 1000)
+      }
+    },
+    getCmusic (sth) {
+      this.inx = sth
+      var _this = this
+      this.getDetail()
       setTimeout(nextmusic, 1000)
       function nextmusic () {
         var audio = document.getElementsByTagName('audio')[0]
@@ -166,6 +206,23 @@ export default {
       } else {
         oMenu.style.display = 'block'
       }
+    },
+    getDetail () {
+      var len = this.inx
+      var url = '/song/detail?ids='
+      var myUrl = (url + this.$store.state.idlist[len]).toString()
+      var _this = this
+      this.$http.get(myUrl)
+        .then(function (response) {
+          console.log(response.data.songs[0])
+          _this.songdetail.singer = response.data.songs[0].ar[0].name
+          _this.songdetail.name = response.data.songs[0].name
+          _this.songdetail.pic = response.data.songs[0].al.picUrl
+          console.log(response.data.songs[0].al.picUrl)
+        })
+        .catch(function (response) {
+          console.log(response)
+        })
     }
   }
 }
@@ -348,5 +405,57 @@ export default {
   right: 150px;
   bottom: 5px;
   display: block;
+  box-shadow:-2px -2px 3px #aaaaaa;
+  display: none;
+}
+#menu #menuTop{
+  text-align: center;
+  font-size: 14px;
+  height: 45px;
+  background-color: #efefef;
+  opacity: 0.6;
+}
+#menu #menuTop span{
+  display: inline-block;
+  width: 80px;
+  color: white;
+  border-radius: 4px;
+  background-color: #646463;
+  height: 25px;
+  line-height: 25px;
+  margin: 10px 0;
+}
+#menu #menuMid{
+  height: 30px;
+  line-height: 30px;
+  background-color: #ffffff;
+  padding-left: 20px;
+  font-size: 14px;
+  color: #acacac;
+  border-bottom: 1px solid #d9d9d9;
+  border-top: 1px solid #d9d9d9;
+}
+#menu span{
+  width: 19%;
+  height: 30px;
+  line-height: 30px;
+  display: inline-block;
+  font-size: 14px;
+  color: #5e5e5e;
+  white-space: nowrap;/*一行显示*/
+  overflow: hidden;/*超出部分隐藏*/
+  text-overflow: ellipsis;/*用...代替超出部分*/
+}
+#menu span.sname{
+  width: 58%;
+  margin-left: 12px;
+  display: inline-block;
+  cursor: pointer;
+}
+#menu p.bianse{
+  background: #f9f9f9;
+}
+#menu .bor{
+  color: #a50010;
 }
 </style>

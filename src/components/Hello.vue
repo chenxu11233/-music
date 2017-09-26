@@ -4,7 +4,7 @@
   <button v-on:click="getDate">recommend</button>
     <div class="title">
     <h4>热门精选</h4>
-      <div v-for="item in commonedlist.result" class="demo">
+      <div v-for="item in commonedlist" class="demo">
         <img :src="item.picUrl" style="width:150px;height:150px;">
         <p>{{item.name}}</p>
       </div>
@@ -33,11 +33,19 @@ export default {
   methods: {
     getDate () {
       var _this = this
-      this.$http.post('/personalized')
+      this.$http.get('/personalized')
         .then(function (response) {
           console.log(response.data)
-          _this.commonedlist = response.data
+          _this.commonedlist = response.data.result
           console.log(_this.commonedlist)
+          _this.$http.get('/personalized/djprogram')
+            .then(function (response) {
+              console.log(response.data.result)
+              _this.commonedlist.push(response.data.result[0], response.data.result[3])
+            })
+            .catch(function (response) {
+              console.log(response)
+            })
         })
         .catch(function (response) {
           console.log(response)
@@ -45,7 +53,7 @@ export default {
     },
     getNewsong () {
       var _this = this
-      this.$http.post('/personalized/newsong')
+      this.$http.get('/personalized/newsong')
         .then(function (response) {
           console.log(response.data)
           _this.newsonglist = response.data
@@ -57,22 +65,40 @@ export default {
     },
     addSong (sth) {
       console.log(sth.id)
-      var oUrl = '/music/url?id=' + sth.id + '&timestamp=1503019930000'
+      var oUrl = '/music/url?id=' + sth.id
       var ourUrl = oUrl.toString()
       var _this = this
+      var aLi = 2
       console.log(ourUrl)
-      this.$http.post(ourUrl)
+      this.$http.get(ourUrl)
         .then(function (response) {
           console.log(response.data.data[0].url)
-          for (var i = 0; i < _this.$store.state.songlist.length; i++) {
-            if (_this.$store.state.songlist[i] !== response.data.data[0].url) {
-              _this.$store.state.songlist.push(response.data.data[0].url)
-              console.log('添加成功')
-              return 1
-            } else {
+          for (var i = 0; i < _this.$store.state.idlist.length; i++) {
+            if (_this.$store.state.idlist[i] === response.data.data[0].id) {
               console.log('该歌曲已存在')
-              return 1
+              aLi = 1
             }
+          }
+          console.log(aLi)
+          if (aLi !== 1) {
+            _this.$store.state.songlist.push(response.data.data[0].url)
+            _this.$store.state.idlist.push(sth.id)
+            var sUrl = '/song/detail?ids=' + sth.id
+            _this.$http.get(sUrl)
+              .then(function (response) {
+                console.log(response.data.songs[0])
+                var Ttime = response.data.songs[0].dt
+                var time = Math.floor(Ttime / 1000)
+                var sec = Math.floor(time % 60)
+                var min = Math.floor(time / 60)
+                console.log(min)
+                _this.$store.state.songmenu.push({'Name': response.data.songs[0].name, 'Singer': response.data.songs[0].ar[0].name, 'Time': min + ':' + sec})
+              })
+              .catch(function (response) {
+                console.log(response)
+              })
+            console.log(_this.$store.state.idlist)
+            console.log('添加成功')
           }
         })
         .catch(function (error) {
