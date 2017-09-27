@@ -1,12 +1,13 @@
 <template>
   <div class="hello">
-  <button v-on:click="getNewsong">newsong</button>
-  <button v-on:click="getDate">recommend</button>
-    <div class="title">
+  <button v-on:click="getNewsong" v-if="this.$route.path=='/songlist'">newsong</button>
+  <button v-on:click="getDate" v-if="this.$route.path=='/songlist'">recommend</button>
+  <router-view v-on:refreshbizlines="addSong"></router-view>
+    <div class="title" v-if="this.$route.path=='/songlist'">
     <h4>热门精选</h4>
-      <div v-for="item in commonedlist" class="demo">
-        <img :src="item.picUrl" style="width:150px;height:150px;">
-        <p>{{item.name}}</p>
+      <div class="demo" v-for="item in commonedlist">
+        <router-link :to="{path:'/songlist/gedan',query:{thismenu:item}}"><img :src="item.picUrl" style="width:150px;height:150px;">
+        <p>{{item.name}}</p></router-link>
       </div>
       <div id="clear"></div>
       <h4>新歌速递</h4>
@@ -70,6 +71,10 @@ export default {
       var _this = this
       var aLi = 2
       console.log(ourUrl)
+      function test () {
+        var len = _this.$store.state.idlist.length - 1
+        _this.$emit('refreshbizlines', len)
+      }
       this.$http.get(ourUrl)
         .then(function (response) {
           console.log(response.data.data[0].url)
@@ -91,14 +96,13 @@ export default {
                 var time = Math.floor(Ttime / 1000)
                 var sec = Math.floor(time % 60)
                 var min = Math.floor(time / 60)
-                console.log(min)
                 _this.$store.state.songmenu.push({'Name': response.data.songs[0].name, 'Singer': response.data.songs[0].ar[0].name, 'Time': min + ':' + sec})
               })
+            setTimeout(test, 500)
               .catch(function (response) {
                 console.log(response)
               })
-            console.log(_this.$store.state.idlist)
-            console.log('添加成功')
+            _this.$store.state.nowN = _this.$store.state.idlist.length
           }
         })
         .catch(function (error) {
@@ -115,6 +119,15 @@ export default {
   margin: 0;
   padding: 0;
   background-color: #fafafa;
+}
+a{
+  text-decoration: none;
+  outline: none;
+  color: #222222;
+}
+.hello{
+  width: 810px;
+  height: 594px;
 }
 .title{
   margin-left: 15px;

@@ -8,7 +8,7 @@
     <div id="cot">
       <div id="left">
         <p class="btitle">推荐</p>
-        <p class="little checked"><i></i>发现音乐</p>
+        <router-link to="/songlist"><p class="little checked"><i></i>发现音乐</p></router-link>
         <p class="little"><i></i>私人FM</p>
         <p class="little"><i></i>MV</p>
         <p class="little"><i></i>朋友</p>
@@ -25,17 +25,17 @@
         <p class="little"><i></i>生命中有太多遗憾，岁月里有太多伤感</p>
         <div id="bMusic">
           <div id="pic">
-            <img :src="songdetail.pic">
+            <img :src="this.$store.state.songdetail.pic">
           </div>
           <div id="songinfo">
-            <p id="sName">{{songdetail.name}}</p>
-            <p id="sSinger">{{songdetail.singer}}</p>
-            <audio  v-bind:src="this.$store.state.songlist[inx]" ></audio>
+            <p id="sName">{{this.$store.state.songdetail.name}}</p>
+            <p id="sSinger">{{this.$store.state.songdetail.singer}}</p>
+            <audio  v-bind:src="this.$store.state.songlist[this.$store.state.nowN]" ></audio>
           </div>
         </div>
       </div>
       <div id="right">
-        <router-view></router-view>
+        <router-view v-on:refreshbizlines="getCmusic"></router-view>
         <div id="menu" >
           <div id="menuTop"><span>播放列表</span></div>
           <div id="menuMid">总共{{this.$store.state.songlist.length}}首</div>
@@ -74,21 +74,19 @@ export default {
         'sec': 0,
         't': 0
       },
-      inx: 1,
-      songdetail: {
-        'singer': '',
-        'pic': '',
-        'name': ''
-      }
+      inx: this.$store.state.nowN
     }
   },
   mounted: function () {
     this.getDetail()
   },
   methods: {
+    /* 播放音乐 */
     getMusic () {
       var audio = document.getElementsByTagName('audio')[0]
       var _this = this
+      audio.volume = this.$store.state.volume
+      var jdt = document.getElementById('jdt')
       this.tTime.t = Math.floor(audio.duration)
       console.log(this.tTime.t)
       this.tTime.sec = Math.floor(this.tTime.t % 60)
@@ -98,9 +96,13 @@ export default {
         _this.mTime.sec = Math.floor(_this.mTime.t % 60)
         _this.mTime.min = Math.floor(_this.mTime.t / 60)
         var percent = _this.mTime.t / _this.tTime.t
-        var jdt = document.getElementById('jdt')
         jdt.style.width = Math.floor(percent * 400) + 'px'
+        if (audio.ended) {
+          _this.getNext()
+          clearInterval(sh)
+        }
       }
+
       /* 获取音乐专辑图片，歌名，歌手 */
 
       /* 显示时间和进度条 */
@@ -112,20 +114,25 @@ export default {
         audio.pause()
         pic.src = this.continue
       }
-      setInterval(getMtime, 1000)
+      var sh = setInterval(getMtime, 1000)
     },
+    /* 下一首 */
     getNext () {
       var len = this.$store.state.songlist.length
       var _this = this
-      if (this.inx === (len - 1)) {
+      var jdt = document.getElementById('jdt')
+      if (this.$store.state.nowN === (len - 1)) {
+        this.$store.state.nowN = 0
         this.inx = 0
       } else {
+        this.$store.state.nowN += 1
         this.inx += 1
       }
       this.getDetail()
       setTimeout(nextmusic, 1000)
       function nextmusic () {
         var audio = document.getElementsByTagName('audio')[0]
+        audio.volume = _this.$store.state.volume
         _this.tTime.t = Math.floor(audio.duration)
         console.log(_this.tTime.t)
         _this.tTime.sec = Math.floor(_this.tTime.t % 60)
@@ -137,26 +144,38 @@ export default {
           var percent = _this.mTime.t / _this.tTime.t
           var jdt = document.getElementById('jdt')
           jdt.style.width = Math.floor(percent * 400) + 'px'
+          if (audio.ended) {
+            _this.getNext()
+            clearInterval(sh)
+          }
         }
         audio.play()
         var pic = document.getElementById('cPlay')
         pic.src = _this.stop
-        setInterval(getMtime, 1000)
+        var sh = setInterval(getMtime, 1000)
+        if (jdt.style.width === 400) {
+          console.log('a song has finished')
+          clearInterval(sh)
+          jdt.style.width = 0
+        }
       }
     },
+    /* 上一首 */
     getPre () {
-      var len = this.songlist.length
+      var len = this.$store.state.songlist.length
       var _this = this
-      if (this.inx === 0) {
-        this.inx = len - 1
+      var jdt = document.getElementById('jdt')
+      if (this.$store.state.nowN === 0) {
+        this.$store.state.nowN = len - 1
       } else {
-        this.inx -= 1
+        this.$store.state.nowN -= 1
       }
       this.getDetail()
       setTimeout(nextmusic, 1000)
       function nextmusic () {
         var audio = document.getElementsByTagName('audio')[0]
-        console.log(_this.inx)
+        audio.volume = _this.$store.state.volume
+        console.log(_this.$store.state.nowN)
         _this.tTime.t = Math.floor(audio.duration)
         _this.tTime.sec = Math.floor(_this.tTime.t % 60)
         _this.tTime.min = Math.floor(_this.tTime.t / 60)
@@ -167,20 +186,33 @@ export default {
           var percent = _this.mTime.t / _this.tTime.t
           var jdt = document.getElementById('jdt')
           jdt.style.width = Math.floor(percent * 400) + 'px'
+          if (audio.ended) {
+            _this.getNext()
+            clearInterval(sh)
+          }
         }
         var pic = document.getElementById('cPlay')
         audio.play()
         pic.src = _this.stop
-        setInterval(getMtime, 1000)
+        var sh = setInterval(getMtime, 1000)
+        if (jdt.style.width === 400) {
+          console.log('a song has finished')
+          clearInterval(sh)
+          jdt.style.width = 0
+        }
       }
     },
+    /* 播放点击的音乐 */
     getCmusic (sth) {
+      this.$store.state.nowN = sth
+      var jdt = document.getElementById('jdt')
       this.inx = sth
       var _this = this
       this.getDetail()
       setTimeout(nextmusic, 1000)
       function nextmusic () {
         var audio = document.getElementsByTagName('audio')[0]
+        audio.volume = _this.$store.state.volume
         console.log(_this.inx)
         _this.tTime.t = Math.floor(audio.duration)
         _this.tTime.sec = Math.floor(_this.tTime.t % 60)
@@ -192,11 +224,20 @@ export default {
           var percent = _this.mTime.t / _this.tTime.t
           var jdt = document.getElementById('jdt')
           jdt.style.width = Math.floor(percent * 400) + 'px'
+          if (audio.ended) {
+            _this.getNext()
+            clearInterval(sh)
+          }
         }
         var pic = document.getElementById('cPlay')
         audio.play()
         pic.src = _this.stop
-        setInterval(getMtime, 1000)
+        var sh = setInterval(getMtime, 1000)
+        if (jdt.style.width === 400) {
+          console.log('a song has finished')
+          clearInterval(sh)
+          jdt.style.width = 0
+        }
       }
     },
     getMenu () {
@@ -208,16 +249,16 @@ export default {
       }
     },
     getDetail () {
-      var len = this.inx
+      var len = this.$store.state.nowN
       var url = '/song/detail?ids='
       var myUrl = (url + this.$store.state.idlist[len]).toString()
       var _this = this
-      this.$http.get(myUrl)
+      _this.$http.get(myUrl)
         .then(function (response) {
           console.log(response.data.songs[0])
-          _this.songdetail.singer = response.data.songs[0].ar[0].name
-          _this.songdetail.name = response.data.songs[0].name
-          _this.songdetail.pic = response.data.songs[0].al.picUrl
+          _this.$store.state.songdetail.singer = response.data.songs[0].ar[0].name
+          _this.$store.state.songdetail.name = response.data.songs[0].name
+          _this.$store.state.songdetail.pic = response.data.songs[0].al.picUrl
           console.log(response.data.songs[0].al.picUrl)
         })
         .catch(function (response) {
@@ -233,6 +274,11 @@ export default {
   margin: 0;
   padding: 0;
 }
+a{
+  text-decoration: none;
+  outline: none;
+  color: #222222;
+}
 #app {
   width: 1002px;
   margin: 0 auto;
@@ -245,7 +291,7 @@ export default {
   margin: 0 auto;
   position: relative;
   border-radius: 5px;
-  margin-top: 50px;
+  margin-top: 0px;
 }
 .logo{
   position: relative;
