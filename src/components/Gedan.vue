@@ -23,7 +23,7 @@
 			</div>
 			<div v-for="(item,index) in SongList" :class="[(index%2) ? '' : 'bianse']">
 			<span class="sIn" :class="[(index%2) ? '' : 'bianse']">{{index+1}}</span>
-			<span class="sCz" :class="[(index%2) ? '' : 'bianse']"></span>
+			<span class="sCz" :class="[(index%2) ? '' : 'bianse']"><img src="../images/add.png" :class="[(index%2) ? '' : 'bianse']" style="width:28px;height:28px;margin-top:4px;" @click="AMusic(item)"></span>
 			<span class="sNa" :class="[(index%2) ? '' : 'bianse']" @click="BMusic(item)">{{item.name}}</span>
 			<span class="sEr" :class="[(index%2) ? '' : 'bianse']">{{item.ar[0].name}}</span>
 			<span class="sAl" :class="[(index%2) ? '' : 'bianse']">{{item.al.name}}</span>
@@ -166,6 +166,9 @@ export default {
     },
     BMusic (num) {
       this.$emit('refreshbizlines', num)
+    },
+    AMusic (num) {
+      this.$emit('refreshbizline', num)
     }
   }
 }

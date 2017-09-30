@@ -34,9 +34,11 @@ const store = new Vuex.Store({
     songdetail: {
       'singer': '',
       'pic': '',
-      'name': ''
+      'name': '',
+      'total': ''
     },
-    volume: 0.2
+    volume: 0.2,
+    gecilist: []
   }
 })
 new Vue({

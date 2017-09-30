@@ -25,7 +25,7 @@
         <p class="little"><i></i>生命中有太多遗憾，岁月里有太多伤感</p>
         <div id="bMusic">
           <div id="pic">
-            <img :src="this.$store.state.songdetail.pic">
+             <router-link to="/geci"><img :src="this.$store.state.songdetail.pic"></router-link>
           </div>
           <div id="songinfo">
             <p id="sName">{{this.$store.state.songdetail.name}}</p>
@@ -35,7 +35,7 @@
         </div>
       </div>
       <div id="right">
-        <router-view v-on:refreshbizlines="getCmusic"></router-view>
+        <router-view v-on:refreshbizlines="getCmusic" ></router-view>
         <div id="menu" >
           <div id="menuTop"><span>播放列表</span></div>
           <div id="menuMid">总共{{this.$store.state.songlist.length}}首</div>
@@ -89,6 +89,7 @@ export default {
       var jdt = document.getElementById('jdt')
       this.tTime.t = Math.floor(audio.duration)
       console.log(this.tTime.t)
+      setTimeout(this.getGeci, 100)
       this.tTime.sec = Math.floor(this.tTime.t % 60)
       this.tTime.min = Math.floor(this.tTime.t / 60)
       var getMtime = function () {
@@ -129,6 +130,7 @@ export default {
         this.inx += 1
       }
       this.getDetail()
+      setTimeout(this.getGeci, 100)
       setTimeout(nextmusic, 1000)
       function nextmusic () {
         var audio = document.getElementsByTagName('audio')[0]
@@ -167,11 +169,14 @@ export default {
       var jdt = document.getElementById('jdt')
       if (this.$store.state.nowN === 0) {
         this.$store.state.nowN = len - 1
+        this.inx = len - 1
       } else {
         this.$store.state.nowN -= 1
+        this.inx -= 1
       }
       this.getDetail()
-      setTimeout(nextmusic, 1000)
+      setTimeout(this.getGeci, 1000)
+      setTimeout(nextmusic, 100)
       function nextmusic () {
         var audio = document.getElementsByTagName('audio')[0]
         audio.volume = _this.$store.state.volume
@@ -209,7 +214,9 @@ export default {
       this.inx = sth
       var _this = this
       this.getDetail()
+      this.getGeci()
       setTimeout(nextmusic, 1000)
+      setTimeout(this.getGeci, 100)
       function nextmusic () {
         var audio = document.getElementsByTagName('audio')[0]
         audio.volume = _this.$store.state.volume
@@ -259,11 +266,43 @@ export default {
           _this.$store.state.songdetail.singer = response.data.songs[0].ar[0].name
           _this.$store.state.songdetail.name = response.data.songs[0].name
           _this.$store.state.songdetail.pic = response.data.songs[0].al.picUrl
+          _this.$store.state.songdetail.total = response.data.songs[0]
           console.log(response.data.songs[0].al.picUrl)
         })
         .catch(function (response) {
           console.log(response)
         })
+    },
+    getGeci () {
+      var url = 'lyric?id='
+      var myid = this.$store.state.songdetail.total.id
+      var thUrl = url + myid
+      var _this = this
+      var pattern = /\d{2}:\d{2}/g
+      var chinese = /\[\d{2}:\d{2}.\d{2,3}\]/g
+      this.$http.get(thUrl)
+        .then(function (response) {
+          console.log(response.data)
+          var lines = response.data.lrc.lyric.split('\n')
+          var len = lines.length - 1
+          if (lines[len] === '') {
+            lines.splice(-1, 1)
+          }
+          console.log(lines)
+          _this.$store.state.gecilist = []
+          lines.forEach(function (value, index, array) {
+            if (value.match(pattern) === null) {
+              _this.$store.state.gecilist.push({'cot': value.replace(chinese, ''), 'time': ''})
+            } else {
+              var arr = value.match(pattern)[0].split(':')
+              var Ctime = Number(arr[0] * 60) + Number(arr[1])
+              _this.$store.state.gecilist.push({'cot': value.replace(chinese, ''), 'time': Ctime})
+            }
+          })
+        })
+      .catch(function (response) {
+        console.log(response)
+      })
     }
   }
 }

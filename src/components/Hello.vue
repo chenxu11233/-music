@@ -1,8 +1,6 @@
 <template>
   <div class="hello">
-  <button v-on:click="getNewsong" v-if="this.$route.path=='/songlist'">newsong</button>
-  <button v-on:click="getDate" v-if="this.$route.path=='/songlist'">recommend</button>
-  <router-view v-on:refreshbizlines="addSong"></router-view>
+  <router-view v-on:refreshbizlines="addSong" v-on:refreshbizline="onlyAddsong"></router-view>
     <div class="title" v-if="this.$route.path=='/songlist'">
     <h4>热门精选</h4>
       <div class="demo" v-for="item in commonedlist">
@@ -30,6 +28,10 @@ export default {
       commonedlist: [],
       newsonglist: []
     }
+  },
+  mounted: function () {
+    this.getNewsong()
+    this.getDate()
   },
   methods: {
     getDate () {
@@ -75,7 +77,7 @@ export default {
         var len = _this.$store.state.idlist.length - 1
         _this.$emit('refreshbizlines', len)
       }
-      this.$http.get(ourUrl)
+      _this.$http.get(ourUrl)
         .then(function (response) {
           console.log(response.data.data[0].url)
           for (var i = 0; i < _this.$store.state.idlist.length; i++) {
@@ -103,6 +105,45 @@ export default {
                 console.log(response)
               })
             _this.$store.state.nowN = _this.$store.state.idlist.length
+          }
+        })
+        .catch(function (error) {
+          console.log(error)
+        })
+    },
+    onlyAddsong (sth) {
+      console.log(sth.id)
+      var oUrl = '/music/url?id=' + sth.id
+      var ourUrl = oUrl.toString()
+      var _this = this
+      var aLi = 2
+      console.log(ourUrl)
+      _this.$http.get(ourUrl)
+        .then(function (response) {
+          console.log(response.data.data[0].url)
+          for (var i = 0; i < _this.$store.state.idlist.length; i++) {
+            if (_this.$store.state.idlist[i] === response.data.data[0].id) {
+              console.log('该歌曲已存在')
+              aLi = 1
+            }
+          }
+          console.log(aLi)
+          if (aLi !== 1) {
+            _this.$store.state.songlist.push(response.data.data[0].url)
+            _this.$store.state.idlist.push(sth.id)
+            var sUrl = '/song/detail?ids=' + sth.id
+            _this.$http.get(sUrl)
+              .then(function (response) {
+                console.log(response.data.songs[0])
+                var Ttime = response.data.songs[0].dt
+                var time = Math.floor(Ttime / 1000)
+                var sec = Math.floor(time % 60)
+                var min = Math.floor(time / 60)
+                _this.$store.state.songmenu.push({'Name': response.data.songs[0].name, 'Singer': response.data.songs[0].ar[0].name, 'Time': min + ':' + sec})
+              })
+              .catch(function (response) {
+                console.log(response)
+              })
           }
         })
         .catch(function (error) {
