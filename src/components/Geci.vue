@@ -1,4 +1,5 @@
 <template>
+<div>
     <div id="geci">
         <div id="gRight">
             <img :src="this.$store.state.songdetail.pic" >
@@ -13,6 +14,18 @@
             </div>
         </div>
     </div>
+    <div id="pingl">
+        <h4>精彩评论</h4>
+        <div v-for="item in this.$store.state.songdetail.comment" class="pl">
+            <span id="pleft"><img :src="item.user.avatarUrl"></span>
+            <span id="pright">
+            <span class="nickn">{{item.user.nickname}}:</span>{{item.content}}
+            <p style="color:#888888;">{{new Date(item.time).toLocaleString()}}
+            <span id="zan"><img src="../images/zan.png">({{item.likedCount}})</span></p>
+            </span>
+        </div>
+    </div>
+</div>
 </template>
 
 <style type="text/css" scoped>
@@ -83,6 +96,49 @@
     #geci #gLeft #content p.zhunbei{
         color: #494948;
     }
+    #pingl h4 {
+        font-size: 15px;
+        color: #494948;
+        padding-bottom: 10px;
+        padding-top: 10px;
+        border-bottom: 1px dashed gray;
+    }
+    #pingl img{
+        width: 40px;
+        height: 40px;
+        border-radius: 40px;
+        display: inline-block;
+    }
+    #pingl #pleft{
+        width: 10%;
+        display:inline-block;
+        margin-left: 25px;
+    }
+    #pingl #pright{
+        width: 82%;
+        display: inline-block;
+    }
+    #pingl #pright .nickn{
+        color: #2d77cb;
+    }
+    #pingl #pright img{
+        width: 20px;
+        height: 20px;
+        position: relative;
+        top: 5px;
+        right: 2px;
+    }
+    #pingl #pright #zan{
+        display: inline-block;
+        width: 100px;
+        float: right;
+    }
+    #pingl .pl{
+        border-bottom: 1px dashed gray;
+        font-size: 13px;
+        padding-top: 10px;
+        padding-bottom: 10px;
+    }
 </style>
 
 <script type="text/javascript">
@@ -104,7 +160,6 @@
         addCot () {
           var audio = document.getElementsByTagName('audio')[0]
           this.current = Math.round(audio.currentTime)
-          console.log(this.current)
         }
       }
     }

@@ -4,6 +4,7 @@ import Hello from '@/components/Hello'
 import Gedan from '@/components/Gedan'
 import Home from '@/components/home'
 import Geci from '@/components/Geci'
+import Search from '@/components/search'
 Vue.use(Router)
 
 export default new Router({
@@ -25,6 +26,10 @@ export default new Router({
     {
       path: '/geci',
       component: Geci
+    },
+    {
+      path: '/search',
+      component: Search
     }
   ]
 })

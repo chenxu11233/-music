@@ -79,8 +79,30 @@ export default {
   },
   mounted: function () {
     this.getDetail()
+    var _this = this
+    var oinp = document.getElementsByTagName('input')
+    oinp[0].onkeypress = function (event) {
+      if (event.which === 13) {
+        _this.$store.state.search = oinp[0].value
+        setTimeout(_this.getSearch, 100)
+        _this.$router.push('/search')
+      }
+    }
   },
   methods: {
+    getSearch () {
+      var url = '/search?keywords='
+      var myurl = url + this.$store.state.search + '&limit=50'
+      var _this = this
+      this.$http.get(myurl)
+      .then(function (response) {
+        console.log(response.data.result.songs)
+        _this.$store.state.searchlist = response.data.result.songs
+      })
+      .catch(function (response) {
+        console.log(response)
+      })
+    },
     /* 播放音乐 */
     getMusic () {
       var audio = document.getElementsByTagName('audio')[0]
@@ -259,6 +281,7 @@ export default {
       var len = this.$store.state.nowN
       var url = '/song/detail?ids='
       var myUrl = (url + this.$store.state.idlist[len]).toString()
+      var comurl = '/comment/music?id=' + this.$store.state.idlist[len]
       var _this = this
       _this.$http.get(myUrl)
         .then(function (response) {
@@ -268,6 +291,15 @@ export default {
           _this.$store.state.songdetail.pic = response.data.songs[0].al.picUrl
           _this.$store.state.songdetail.total = response.data.songs[0]
           console.log(response.data.songs[0].al.picUrl)
+        })
+        .catch(function (response) {
+          console.log(response)
+        })
+        /* 获取热门评论 */
+      _this.$http.get(comurl)
+        .then(function (response) {
+          _this.$store.state.songdetail.comment = response.data.hotComments
+          console.log(_this.$store.state.songdetail.comment)
         })
         .catch(function (response) {
           console.log(response)
@@ -484,11 +516,11 @@ a{
 }
 #menu{
   width: 500px;
-  height: 400px;
+  height: 380px;
   background-color:#ffffff;
   position: absolute;
   right: 150px;
-  bottom: 5px;
+  bottom: 40px;
   display: block;
   box-shadow:-2px -2px 3px #aaaaaa;
   display: none;
